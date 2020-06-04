@@ -1,0 +1,75 @@
+#include <Adafruit_DHT.h>
+#include <ThingSpeak.h>
+#include <MQTT.h>
+
+#define SOIL_THRESHOLD 512
+#define TEMP_THRESHOLD 30
+#define HUM_THRESHOLD 20
+
+MQTT client("test.mosquitto.org", 1883, callback);
+
+void callback(char* topic, byte* payload, unsigned int length) 
+{
+}
+
+int SoilSensor = A1;
+int Temp_HumSensor;
+
+
+void setup(){
+
+Serial.begin(9600);
+pinMode(SoilSensor, INPUT);
+pinMode(Temp_HumSensor, INPUT);
+
+client.connect("photonDev");
+pinMode(0, INPUT);
+pinMode(6, INPUT);
+
+}
+
+void loop(){
+    
+int MoistureLevel = (analogRead(SoilSensor)) ;
+int Temp = analogRead(Temp_HumSensor) - 273;
+int Hum = (analogRead(Temp_HumSensor)) / 10 ;
+
+int i = SOIL_THRESHOLD;
+int x = TEMP_THRESHOLD;
+int y = HUM_THRESHOLD;
+
+if (MoistureLevel >= i ) 
+Particle.publish("moisture", "present", PRIVATE);
+
+if (MoistureLevel < i) 
+Particle.publish("moisture", "absent", PRIVATE);
+
+  String temp = String(Temp);
+  Particle.publish("temp", temp, PRIVATE);
+
+  String hum = String(Hum);
+  Particle.publish("hum", hum, PRIVATE);
+
+delay(10000000);
+
+ if (client.isConnected())
+    {
+
+        if(digitalRead(0) == 0)
+        {
+            // Publish our message to the test server
+            client.publish("photonLog", "Button has been pressed");
+            delay(1000);        
+        }
+        
+        if(digitalRead(6) == 0)
+        {
+            // Publish our message to the test server
+            client.publish("photonLog", "incoming temperature and humidity values");
+            delay(1000);        
+        }
+        
+        // CALL THIS at the end of your loop
+        client.loop();
+    }
+} 

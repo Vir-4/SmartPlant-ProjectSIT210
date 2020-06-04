@@ -1,0 +1,72 @@
+// This #include statement was automatically added by the Particle IDE.
+#include <ThingSpeak.h>
+
+// This #include statement was automatically added by the Particle IDE.
+#include <MQTT.h>
+
+#define SOIL_THRESHOLD 512
+
+MQTT client("test.mosquitto.org", 1883, callback);
+
+void callback(char* topic, byte* payload, unsigned int length) 
+{
+}
+
+int SoilSensor = A1;
+int LightSensor = A3;
+
+
+void setup(){
+
+Serial.begin(9600);
+pinMode(SoilSensor, INPUT);
+pinMode(A3 , INPUT);
+
+client.connect("photonDev");
+pinMode(0, INPUT);
+pinMode(3, INPUT);
+
+}
+
+void loop(){
+    
+int MoistureLevel = (analogRead(SoilSensor)) ;
+int Light = analogRead(LightSensor);
+
+
+int i = SOIL_THRESHOLD;
+
+if (MoistureLevel >= i ) 
+Particle.publish("moisture", "present", PRIVATE);
+
+if (MoistureLevel < i) 
+Particle.publish("moisture", "absent", PRIVATE);
+
+String light = String(Light);
+Particle.publish("light", light, PRIVATE);
+
+
+delay(900000);
+
+ if (client.isConnected())
+    {
+
+        if(digitalRead(0) == 0)
+        {
+            // Publish our message to the test server
+            client.publish("photonLog", "Button has been pressed");
+            delay(1000);        
+        }
+        
+        if(analogRead(6) == 0)
+        {
+            // Publish our message to the test server
+            client.publish("photonLog", "Publishing Room light values to PI");
+            delay(1000);        
+        }
+        
+        // CALL THIS at the end of your loop
+        client.loop();
+    }
+} 
+
